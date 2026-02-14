@@ -5,9 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.DayOfWeek;
-import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -15,8 +13,6 @@ import java.util.logging.Logger;
  * config.yml の読み込み・管理クラス
  */
 public class ConfigManager {
-
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("H:mm");
 
     private final JavaPlugin plugin;
     private final Logger logger;
@@ -83,6 +79,17 @@ public class ConfigManager {
                 + ", タイムゾーン: " + timezone.getId());
     }
 
+    /**
+     * "H:mm" 形式の時刻文字列を分数に変換する。
+     * 24:00 を超える値（例: "25:00" = 翌日 01:00）にも対応。
+     */
+    private int parseTimeToMinutes(String timeStr) {
+        String[] parts = timeStr.split(":");
+        int hours = Integer.parseInt(parts[0]);
+        int minutes = Integer.parseInt(parts[1]);
+        return hours * 60 + minutes;
+    }
+
     @SuppressWarnings("unchecked")
     private ScheduleEntry parseScheduleEntry(Map<?, ?> map) {
         List<String> dayStrings = (List<String>) map.get("days");
@@ -94,10 +101,10 @@ public class ConfigManager {
             days.add(DayOfWeek.valueOf(dayStr.toUpperCase()));
         }
 
-        LocalTime start = LocalTime.parse(startStr, TIME_FORMAT);
-        LocalTime end = LocalTime.parse(endStr, TIME_FORMAT);
+        int startMinutes = parseTimeToMinutes(startStr);
+        int endMinutes = parseTimeToMinutes(endStr);
 
-        return new ScheduleEntry(days, start, end);
+        return new ScheduleEntry(days, startMinutes, endMinutes);
     }
 
     public List<ScheduleEntry> getScheduleEntries() {
