@@ -1,0 +1,37 @@
+# ============================================
+# TimeGate - 時間制限ホワイトリスト設定
+# ============================================
+
+# 開放スケジュール（この時間帯はすべてのプレイヤーがログイン可能）
+# スケジュール外の時間帯は閉鎖状態
+schedule:
+  - days:
+      - SATURDAY
+      - SUNDAY
+    start: "10:00"
+    end: "22:00"
+  - days:
+      - MONDAY
+      - TUESDAY
+      - WEDNESDAY
+      - THURSDAY
+      - FRIDAY
+    start: "18:00"
+    end: "23:00"
+
+# 閉鎖状態への遷移時に権限のないプレイヤーをキックするか
+kick-on-close: true
+
+# キック時のメッセージ (MiniMessage 形式)
+kick-message: "<red>サーバーは現在閉鎖中です。\n<gray>次の開放時間をお待ちください。"
+
+# ログイン拒否メッセージ (MiniMessage 形式)
+deny-message: "<red>サーバーは現在閉鎖中です。\n<gray>次の開放時間をお待ちください。"
+
+# MOTD 設定 (MiniMessage 形式)
+motd:
+  open: "<gradient:green:aqua><bold>MyServer</bold></gradient> <gray>- 開放中！\n<green>✔ 誰でも参加できます"
+  closed: "<gradient:red:gold><bold>MyServer</bold></gradient> <gray>- 閉鎖中\n<red>✖ 現在はホワイトリスト限定です"
+
+# タイムゾーン (デフォルトはサーバーのシステムタイムゾーン)
+timezone: "Asia/Tokyo"

@@ -1,0 +1,23 @@
+name: TimeGate
+version: '${version}'
+main: dev.timegateplugin.timegate.TimeGate
+api-version: '1.21'
+description: Time-based whitelist plugin with MOTD switching
+authors:
+  - TimeGatePlugin
+
+commands:
+  timegate:
+    description: TimeGate management commands
+    usage: /timegate <status|open|close|auto|reload>
+    permission: timegate.admin
+    aliases:
+      - tg
+
+permissions:
+  timegate.bypass:
+    description: Allows joining the server even when the gate is closed
+    default: op
+  timegate.admin:
+    description: Allows using /timegate commands
+    default: op
