@@ -51,6 +51,44 @@ public record ScheduleEntry(Set<DayOfWeek> days, int startMinutes, int endMinute
     }
 
     /**
+     * 現在の曜日・時刻から、このスケジュールの終了までの残り分数を返す。
+     * このスケジュール内でない場合は -1 を返す。
+     *
+     * @param day  現在の曜日
+     * @param time 現在の時刻
+     * @return 終了までの残り分数、スケジュール外なら -1
+     */
+    public int getMinutesUntilEnd(DayOfWeek day, LocalTime time) {
+        int currentMinutes = time.getHour() * 60 + time.getMinute();
+
+        // 当日のスケジュール内か
+        if (days.contains(day)) {
+            if (endMinutes <= MINUTES_PER_DAY) {
+                // 通常
+                if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                    return endMinutes - currentMinutes;
+                }
+            } else {
+                // 日またぎ: 当日の start 以降
+                if (currentMinutes >= startMinutes) {
+                    return (endMinutes - currentMinutes);
+                }
+            }
+        }
+
+        // 前日のスケジュールが翌日にまたがっている場合
+        DayOfWeek previousDay = day.minus(1);
+        if (days.contains(previousDay) && endMinutes > MINUTES_PER_DAY) {
+            int overflowMinutes = endMinutes - MINUTES_PER_DAY;
+            if (currentMinutes < overflowMinutes) {
+                return overflowMinutes - currentMinutes;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
      * 分数を "HH:mm" 形式の文字列に変換する（表示用）
      */
     public String formatTime(int minutes) {

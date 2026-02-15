@@ -2,6 +2,7 @@ package dev.timegateplugin.timegate.schedule;
 
 import dev.timegateplugin.timegate.config.ConfigManager;
 import dev.timegateplugin.timegate.util.MessageUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -10,7 +11,9 @@ import org.bukkit.scheduler.BukkitTask;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -40,6 +43,9 @@ public class ScheduleManager {
     private OverrideMode overrideMode = OverrideMode.NONE;
     private GateState currentState;
     private BukkitTask checkTask;
+
+    /** すでに送信済みの告知（分数）を記録し、重複送信を防ぐ */
+    private final Set<Integer> sentWarnings = new HashSet<>();
 
     public ScheduleManager(JavaPlugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
@@ -77,6 +83,60 @@ public class ScheduleManager {
             currentState = newState;
             onStateChanged(oldState, newState);
         }
+
+        // 開放中の場合、閉鎖前の告知をチェック
+        if (currentState == GateState.OPEN && overrideMode == OverrideMode.NONE) {
+            checkWarnings();
+        }
+    }
+
+    /**
+     * 閉鎖前の告知チェック
+     */
+    private void checkWarnings() {
+        ZonedDateTime now = ZonedDateTime.now(configManager.getTimezone());
+        DayOfWeek day = now.getDayOfWeek();
+        LocalTime time = now.toLocalTime();
+
+        // 現在のスケジュールの残り分数を取得
+        int minutesRemaining = -1;
+        List<ScheduleEntry> entries = configManager.getScheduleEntries();
+        for (ScheduleEntry entry : entries) {
+            int remaining = entry.getMinutesUntilEnd(day, time);
+            if (remaining >= 0) {
+                minutesRemaining = remaining;
+                break;
+            }
+        }
+
+        if (minutesRemaining < 0) {
+            return;
+        }
+
+        // 設定された告知間隔とマッチするか確認
+        List<Integer> intervals = configManager.getWarningIntervals();
+        for (int interval : intervals) {
+            if (minutesRemaining <= interval && !sentWarnings.contains(interval)) {
+                sentWarnings.add(interval);
+                broadcastWarning(minutesRemaining);
+                break; // 1 tick で 1 つだけ告知
+            }
+        }
+    }
+
+    /**
+     * 全プレイヤーに閉鎖前告知を送信する
+     */
+    private void broadcastWarning(int minutesRemaining) {
+        String messageTemplate = configManager.getWarningMessage();
+        String message = messageTemplate.replace("{minutes}", String.valueOf(minutesRemaining));
+        Component component = MessageUtil.parse(message);
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendMessage(component);
+        }
+
+        logger.info("閉鎖前告知を送信しました: 残り " + minutesRemaining + " 分");
     }
 
     /**
@@ -84,6 +144,9 @@ public class ScheduleManager {
      */
     private void onStateChanged(GateState oldState, GateState newState) {
         logger.info("ゲート状態が変化しました: " + oldState + " -> " + newState);
+
+        // 状態が変わったら告知済みセットをリセット
+        sentWarnings.clear();
 
         if (newState == GateState.CLOSED && configManager.isKickOnClose()) {
             kickNonBypassPlayers();
@@ -161,6 +224,7 @@ public class ScheduleManager {
      * 現在の状態を即座に再評価する（reload 後などに使用）
      */
     public void reevaluate() {
+        sentWarnings.clear();
         GateState newState = evaluateState();
         if (newState != currentState) {
             GateState oldState = currentState;

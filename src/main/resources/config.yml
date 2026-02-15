@@ -34,5 +34,12 @@ motd:
   open: "<gradient:green:aqua><bold>MyServer</bold></gradient> <gray>- 開放中！\n<green>✔ 誰でも参加できます"
   closed: "<gradient:red:gold><bold>MyServer</bold></gradient> <gray>- 閉鎖中\n<red>✖ 現在はホワイトリスト限定です"
 
+# 閉鎖前の告知設定
+warning:
+  # 告知を行う残り分数のリスト
+  intervals: [30, 15, 5, 1]
+  # 告知メッセージ (MiniMessage 形式, {minutes} がリプレースされます)
+  message: "<gold><bold>⚠ 告知</bold></gold> <yellow>サーバーは <red>{minutes}分後</red> に閉鎖されます。"
+
 # タイムゾーン (デフォルトはサーバーのシステムタイムゾーン)
 timezone: "Asia/Tokyo"

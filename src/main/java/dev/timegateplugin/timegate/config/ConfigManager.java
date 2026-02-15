@@ -23,6 +23,8 @@ public class ConfigManager {
     private String denyMessage;
     private String motdOpen;
     private String motdClosed;
+    private List<Integer> warningIntervals;
+    private String warningMessage;
     private ZoneId timezone;
 
     public ConfigManager(JavaPlugin plugin) {
@@ -61,6 +63,15 @@ public class ConfigManager {
         denyMessage = config.getString("deny-message", "<red>サーバーは現在閉鎖中です。");
         motdOpen = config.getString("motd.open", "<green>Server is OPEN");
         motdClosed = config.getString("motd.closed", "<red>Server is CLOSED");
+
+        // 閉鎖前告知設定
+        List<Integer> defaultIntervals = List.of(30, 15, 5, 1);
+        warningIntervals = config.getIntegerList("warning.intervals");
+        if (warningIntervals.isEmpty()) {
+            warningIntervals = defaultIntervals;
+        }
+        warningMessage = config.getString("warning.message",
+                "<gold><bold>⚠ 告知</bold></gold> <yellow>サーバーは <red>{minutes}分後</red> に閉鎖されます。");
 
         // タイムゾーン
         String tz = config.getString("timezone", "");
@@ -133,5 +144,13 @@ public class ConfigManager {
 
     public ZoneId getTimezone() {
         return timezone;
+    }
+
+    public List<Integer> getWarningIntervals() {
+        return Collections.unmodifiableList(warningIntervals);
+    }
+
+    public String getWarningMessage() {
+        return warningMessage;
     }
 }
