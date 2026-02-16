@@ -32,10 +32,14 @@ public record ScheduleEntry(Set<DayOfWeek> days, int startMinutes, int endMinute
         if (days.contains(day)) {
             if (endMinutes <= MINUTES_PER_DAY) {
                 // 通常: 日をまたがない (例: 15:00〜22:00)
-                return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+                if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                    return true;
+                }
             } else {
                 // 日またぎ: 開始日の start 以降は開放 (例: 15:00〜25:00 の 15:00〜23:59)
-                return currentMinutes >= startMinutes;
+                if (currentMinutes >= startMinutes) {
+                    return true;
+                }
             }
         }
 
